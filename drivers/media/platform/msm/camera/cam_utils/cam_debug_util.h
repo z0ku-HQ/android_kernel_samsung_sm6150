@@ -50,7 +50,12 @@
 #define CAM_PERF       (1 << 25)
 
 #define CAM_HYP        (1 << 26)
-#define CAM_IR_LED     (1 << 27)
+#if defined(CONFIG_USE_CAMERA_HW_BIG_DATA)
+#define CAM_HWB        (1 << 27)
+#endif
+
+#define CAM_IR_LED     (1 << 28)
+
 #define STR_BUFFER_MAX_LENGTH  1024
 
 /*
@@ -78,6 +83,17 @@ void cam_debug_log(unsigned int module_id, const char *func, const int line,
  */
 const char *cam_get_module_name(unsigned int module_id);
 
+#if 0	// defined(CONFIG_SEC_A71_PROJECT)
+#define CAM_QCLOGMINIMAL(__module, fmt, args...)                   \
+	pr_err("CAM_ERR: %s: %s: %d " fmt "\n",                     \
+		cam_get_module_name(__module), __func__,  __LINE__, ##args)
+#else
+/* for non SAMSUNG_A70SQ_CAMERA  model MINIMAL meas DBG.
+  * DBG which is not enabled for R5 and other model.
+  * hence no KPI impact should be. */
+#define CAM_QCLOGMINIMAL(__module, fmt, args...)                   \
+	cam_debug_log(__module, __func__, __LINE__, fmt, ##args)
+#endif
 /*
  * CAM_ERR
  * @brief    :  This Macro will print error logs
