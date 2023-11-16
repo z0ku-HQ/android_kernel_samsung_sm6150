@@ -473,6 +473,7 @@ entSys:
 #else
 	blbs    $3, strace		/* check for SYSCALL_TRACE in disguise */
 #endif
+	bne     $3, strace
 	beq	$4, 1f
 	ldq	$27, 0($5)
 1:	jsr	$26, ($27), alpha_ni_syscall

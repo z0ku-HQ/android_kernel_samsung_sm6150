@@ -24,6 +24,13 @@
 #include <asm/pgtable-hwdef.h>
 #include <asm/pgtable-prot.h>
 
+#ifdef CONFIG_UH
+#include <linux/uh.h>
+#ifdef CONFIG_UH_RKP
+#include <linux/rkp.h>
+#endif
+#endif
+
 /*
  * VMALLOC range.
  *
@@ -128,6 +135,13 @@ static inline pte_t clear_pte_bit(pte_t pte, pgprot_t prot)
 static inline pte_t set_pte_bit(pte_t pte, pgprot_t prot)
 {
 	pte_val(pte) |= pgprot_val(prot);
+	return pte;
+}
+
+static inline pte_t pte_wrprotect(pte_t pte)
+{
+	pte = clear_pte_bit(pte, __pgprot(PTE_WRITE));
+	pte = set_pte_bit(pte, __pgprot(PTE_RDONLY));
 	return pte;
 }
 
@@ -236,8 +250,23 @@ pte_bad:
 pte_ok:
 #endif
 
-	*ptep = pte;
+#ifdef CONFIG_UH_RKP
+	/* bug on double mapping */
+	BUG_ON(pte_val(pte) && rkp_is_pg_dbl_mapped(pte_val(pte)));
 
+	if (rkp_is_pg_protected((u64)ptep)) {
+		uh_call(UH_APP_RKP, RKP_WRITE_PGT3, (u64)ptep, pte_val(pte), 0, 0);
+	} else {
+		asm volatile("mov x1, %0\n"
+					"mov x2, %1\n"
+					"str x2, [x1]\n"
+		:
+		: "r" (ptep), "r" (pte)
+		: "x1", "x2", "memory");
+	}
+#else
+	*ptep = pte;
+#endif
 	/*
 	 * Only if the new pte is valid and kernel, otherwise TLB maintenance
 	 * or update_mmu_cache() have the necessary barriers.
@@ -422,7 +451,20 @@ static inline bool pud_table(pud_t pud) { return true; }
 
 static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 {
+#ifdef CONFIG_UH_RKP
+	if (rkp_is_pg_protected((u64)pmdp)) {
+		uh_call(UH_APP_RKP, RKP_WRITE_PGT2, (u64)pmdp, pmd_val(pmd), 0, 0);
+	} else {
+		asm volatile("mov x1, %0\n"
+					"mov x2, %1\n"
+					"str x2, [x1]\n"
+		:
+		: "r" (pmdp), "r" (pmd)
+		: "x1", "x2", "memory");
+	}
+#else
 	*pmdp = pmd;
+#endif
 	dsb(ishst);
 	isb();
 }
@@ -479,7 +521,20 @@ static inline void pte_unmap(pte_t *pte) { }
 
 static inline void set_pud(pud_t *pudp, pud_t pud)
 {
+#ifdef CONFIG_UH_RKP
+	if (rkp_is_pg_protected((u64)pudp)) {
+		uh_call(UH_APP_RKP, RKP_WRITE_PGT1, (u64)pudp, pud_val(pud), 0, 0);
+	} else {
+		asm volatile("mov x1, %0\n"
+					"mov x2, %1\n"
+					"str x2, [x1]\n"
+		:
+		: "r" (pudp), "r" (pud)
+		: "x1", "x2", "memory");
+	}
+#else
 	*pudp = pud;
+#endif
 	dsb(ishst);
 	isb();
 }
@@ -694,6 +749,12 @@ static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long addres
 	pte = READ_ONCE(*ptep);
 	do {
 		old_pte = pte;
+		/*
+		 * If hardware-dirty (PTE_WRITE/DBM bit set and PTE_RDONLY
+		 * clear), set the PTE_DIRTY bit.
+		 */
+		if (pte_hw_dirty(pte))
+			pte = pte_mkdirty(pte);
 		pte = pte_wrprotect(pte);
 		pte_val(pte) = cmpxchg_relaxed(&pte_val(*ptep),
 					       pte_val(old_pte), pte_val(pte));

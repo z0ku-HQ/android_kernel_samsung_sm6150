@@ -404,6 +404,20 @@ do_entIF(unsigned long type, struct pt_regs *regs)
 		}
 		break;
 
+	      case 3: /* FEN fault */
+		/* Irritating users can call PAL_clrfen to disable the
+		   FPU for the process.  The kernel will then trap in
+		   do_switch_stack and undo_switch_stack when we try
+		   to save and restore the FP registers.
+
+		   Given that GCC by default generates code that uses the
+		   FP registers, PAL_clrfen is not useful except for DoS
+		   attacks.  So turn the bleeding FPU back on and be done
+		   with it.  */
+		current_thread_info()->pcb.flags |= 1;
+		__reload_thread(&current_thread_info()->pcb);
+		return;
+
 	      case 5: /* illoc */
 	      default: /* unexpected instruction-fault type */
 		      ;

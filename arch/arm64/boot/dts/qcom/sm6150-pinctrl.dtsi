@@ -256,6 +256,7 @@
 					pins = "gpio18", "gpio19";
 					drive-strength = <2>;
 					bias-pull-up;
+					input-enable;
 				};
 			};
 		};
@@ -290,32 +291,48 @@
 			};
 		};
 
-		/* QUPv3_1 North instances */
-		/* SE 4 pin mappings */
-		qupv3_se4_i2c_pins: qupv3_se4_i2c_pins {
-			qupv3_se4_i2c_active: qupv3_se4_i2c_active {
-				mux {
-					pins = "gpio20", "gpio21";
-					function = "qup10";
-				};
+		/* SE 4 pin mappings for AFC*/ 
+		qupv3_se4_afc_pins: qupv3_se4_afc_pins { 
+			qupv3_se4_afc_active: qupv3_se4_afc_active { 
+				mux { 
+				pins = "gpio20"; 
+				function = "qup10"; 
+				}; 
 
-				config {
-					pins = "gpio20", "gpio21";
-					drive-strength = <2>;
-					bias-disable;
-				};
-			};
+				config { 
+				pins = "gpio20"; 
+				drive-strength = <2>; 
+				bias-disable; 
+				}; 
+		}; 
 
-			qupv3_se4_i2c_sleep: qupv3_se4_i2c_sleep {
+		qupv3_se4_afc_sleep: qupv3_se4_afc_sleep { 
+			mux { 
+				pins = "gpio20"; 
+				function = "gpio"; 
+				}; 
+
+
+				config { 
+				pins = "gpio20"; 
+				drive-strength = <2>; 
+				bias-pull-up; 
+				}; 
+			}; 
+		}; 
+
+		/* smb1390 i2c */
+		smb1390_i2c: smb1390_i2c {
+			smb1390_i2c_active: smb1390_i2c_active {
 				mux {
-					pins = "gpio20", "gpio21";
+					pins = "gpio113", "gpio114";
 					function = "gpio";
 				};
 
 				config {
-					pins = "gpio20", "gpio21";
+					pins = "gpio113", "gpio114";
 					drive-strength = <2>;
-					bias-pull-up;
+					bias-disable;
 				};
 			};
 		};
@@ -2328,12 +2345,6 @@
 &pm6150l_gpios {
 	cam_sensor_dvdd_en: cam_sensor_dvdd_en {
 		pins = "gpio3";
-		function = "normal";
-		power-source = <0>;
-		output-low;
-	};
-	cam_sensor_0_vana: cam_sensor_0_vana {
-		pins = "gpio9";
 		function = "normal";
 		power-source = <0>;
 		output-low;
