@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -147,6 +147,13 @@ struct generic_get_data_ {
 	int ints[];
 };
 static struct generic_get_data_ *generic_get_data;
+
+#ifdef CONFIG_SEC_SND_ADAPTATION
+struct audio_session *q6asm_get_audio_session(void)
+{
+	return session;
+}
+#endif /* CONFIG_SEC_SND_ADAPTATION */
 
 static inline void q6asm_set_flag_in_token(union asm_token_struct *asm_token,
 					   int flag, int flag_offset)
@@ -2371,16 +2378,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 				__func__, data->payload_size);
 		break;
 	case ASM_SESSION_CMDRSP_GET_MTMX_STRTR_PARAMS_V2:
-		payload_size = sizeof(struct asm_mtmx_strtr_get_params_cmdrsp);
-		if (data->payload_size < payload_size) {
-			pr_err("%s: insufficient payload size = %d\n",
-				__func__, data->payload_size);
-			spin_unlock_irqrestore(
-				&(session[session_id].session_lock), flags);
-			return -EINVAL;
-		}
-		q6asm_process_mtmx_get_param_rsp(ac,
-			(struct asm_mtmx_strtr_get_params_cmdrsp *) payload);
+		q6asm_process_mtmx_get_param_rsp(ac, (void *) payload);
 		break;
 	case ASM_STREAM_PP_EVENT:
 	case ASM_STREAM_CMD_ENCDEC_EVENTS:

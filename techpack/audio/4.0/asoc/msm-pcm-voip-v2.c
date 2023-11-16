@@ -25,6 +25,7 @@
 #include "msm-pcm-routing-v2.h"
 
 #define SHARED_MEM_BUF 2
+#define VOIP_MIN_Q_LEN 2
 #define VOIP_MAX_Q_LEN 10
 #define VOIP_MAX_VOC_PKT_SIZE 4096
 #define VOIP_MIN_VOC_PKT_SIZE 320
@@ -1291,10 +1292,16 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 	struct snd_dma_buffer *dma_buf = &substream->dma_buffer;
 	struct voip_buf_node *buf_node = NULL;
 	int i = 0, offset = 0;
+	int periods = VOIP_MIN_Q_LEN;
 
 	pr_debug("%s: voip\n", __func__);
 
 	mutex_lock(&voip_info.lock);
+
+	/* Use various voip Q size */
+	periods = params_periods(params);
+	pr_info("%s: periods = %d\n", __func__, periods);
+	runtime->hw.buffer_bytes_max = sizeof(struct voip_buf_node) * periods;
 
 	dma_buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	dma_buf->dev.dev = substream->pcm->card->dev;

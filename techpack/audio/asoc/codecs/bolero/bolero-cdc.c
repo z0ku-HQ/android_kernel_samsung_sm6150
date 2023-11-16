@@ -154,12 +154,13 @@ static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 			priv->macro_params[RX_MACRO].event_handler(priv->codec,
 				BOLERO_MACRO_EVT_IMPED_FALSE, data);
 		break;
-	case WCD_BOLERO_EVT_BCS_CLK_OFF:
-		if (priv->macro_params[TX_MACRO].event_handler)
-			priv->macro_params[TX_MACRO].event_handler(
-				priv->codec,
-				BOLERO_MACRO_EVT_BCS_CLK_OFF, data);
+#ifdef CONFIG_SND_SOC_IMPED_SENSING
+	case SEC_WCD_BOLERO_EVT_IMPED_TRUE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(priv->codec,
+				SEC_BOLERO_MACRO_EVT_IMPED_TRUE, data);
 		break;
+#endif
 	default:
 		dev_err(priv->dev, "%s: Invalid event %d trigger from wcd\n",
 			__func__, event);
