@@ -404,6 +404,24 @@
 	};
 };
 
+&soc {
+	i2c_13: 12c@13 {
+		status  = "ok";
+
+		cell-index = <13>;
+		compatible = "i2c-gpio";
+		gpios = <&tlmm 42 0 /*sda*/
+			&tlmm 43 0 /*scl*/
+			>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&smb1390_i2c_active>;
+		#include "smb1390.dtsi"
+	};
+};
+#if 0  /* block for smb1355 + sm7150 */
 &qupv3_se9_i2c {
 	status = "ok";
 	#include "smb1390.dtsi"
@@ -419,7 +437,7 @@
 &smb1355_charger {
 	status = "ok";
 };
-
+#endif
 &smb1390 {
 	/delete-property/ interrupts;
 	interrupts = <0x0 0xc2 0x0 IRQ_TYPE_LEVEL_LOW>;

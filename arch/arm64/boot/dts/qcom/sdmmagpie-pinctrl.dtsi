@@ -486,6 +486,22 @@
 			};
 		};
 
+		/* smb1390 i2c */
+		smb1390_i2c: smb1390_i2c {
+			smb1390_i2c_active: smb1390_i2c_active {
+				mux {
+					pins = "gpio43", "gpio42";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio43", "gpio42";
+					drive-strength = <2>;
+					bias-disable;
+				};
+			};
+		};
+
 		qupv3_se4_4uart_pins: qupv3_se4_4uart_pins {
 			qupv3_se4_ctsrx: qupv3_se4_ctsrx {
 				mux {
