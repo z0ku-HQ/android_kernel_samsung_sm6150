@@ -94,8 +94,8 @@ struct opal_dev {
 	u64 lowest_lba;
 
 	size_t pos;
-	u8 *cmd;
-	u8 *resp;
+	u8 cmd[IO_BUFFER_LENGTH];
+	u8 resp[IO_BUFFER_LENGTH];
 
 	struct parsed_resp parsed;
 	size_t prev_d_len;
