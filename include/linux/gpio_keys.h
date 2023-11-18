@@ -26,6 +26,7 @@ struct gpio_keys_button {
 	const char *desc;
 	unsigned int type;
 	int wakeup;
+	int wakeup_default;
 	int debounce_interval;
 	bool can_disable;
 	int value;
