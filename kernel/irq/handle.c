@@ -15,6 +15,7 @@
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 #include <linux/kernel_stat.h>
+#include <linux/sec_debug.h>
 
 #include <trace/events/irq.h>
 
@@ -143,9 +144,11 @@ irqreturn_t __handle_irq_event_percpu(struct irq_desc *desc, unsigned int *flags
 	for_each_action_of_desc(desc, action) {
 		irqreturn_t res;
 
+		sec_debug_irq_sched_log(irq, action->handler, (char *)action->name, IRQ_ENTRY);
 		trace_irq_handler_entry(irq, action);
 		res = action->handler(irq, action->dev_id);
 		trace_irq_handler_exit(irq, action, res);
+		sec_debug_irq_sched_log(irq, action->handler, (char *)action->name, IRQ_EXIT);
 
 		if (WARN_ONCE(!irqs_disabled(),"irq %u handler %pF enabled interrupts\n",
 			      irq, action->handler))
@@ -186,7 +189,7 @@ irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
 
 	retval = __handle_irq_event_percpu(desc, &flags);
 
-	add_interrupt_randomness(desc->irq_data.irq);
+	add_interrupt_randomness(desc->irq_data.irq, flags);
 
 	if (!noirqdebug)
 		note_interrupt(desc, retval);
