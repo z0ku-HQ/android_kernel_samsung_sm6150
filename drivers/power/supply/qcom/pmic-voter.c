@@ -348,6 +348,23 @@ int get_effective_result(struct votable *votable)
 	return value;
 }
 
+#if defined(CONFIG_BATTERY_SAMSUNG_USING_QC)
+void get_setanytype_effective_client(struct votable *votable)
+{
+	int i = 0;
+
+	lock_votable(votable);
+	for (i = 0; i < votable->num_clients; i++) {
+		if (votable->client_strs[i] && votable->votes[i].enabled) {
+			pr_info("sec_bat_monitor_work: %s: %s\n", votable->name, votable->client_strs[i]);
+			unlock_votable(votable);
+			return;
+		}
+	}
+	unlock_votable(votable);
+	return;
+}
+#endif
 /**
  * get_effective_client() -
  * get_effective_client_locked() -
