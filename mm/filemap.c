@@ -40,6 +40,18 @@
 #include <linux/psi.h>
 #include "internal.h"
 
+#if defined(CONFIG_SDP)
+#include <sdp/cache_cleanup.h>
+#endif
+
+#ifdef CONFIG_FSCRYPT_SDP
+#include <linux/fscrypto_sdp_cache.h>
+#endif
+
+#ifdef CONFIG_PAGE_BOOST_RECORDING
+#include <linux/io_record.h>
+#endif
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/filemap.h>
 
@@ -191,6 +203,11 @@ void __delete_from_page_cache(struct page *page, void *shadow)
 {
 	struct address_space *mapping = page->mapping;
 	int nr = hpage_nr_pages(page);
+
+#if defined(CONFIG_SDP)
+	if (mapping_sensitive(mapping))
+		sdp_page_cleanup(page);
+#endif
 
 	trace_mm_filemap_delete_from_page_cache(page);
 	/*
@@ -2024,6 +2041,9 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
 	prev_offset = ra->prev_pos & (PAGE_SIZE-1);
 	last_index = (*ppos + iter->count + PAGE_SIZE-1) >> PAGE_SHIFT;
 	offset = *ppos & ~PAGE_MASK;
+#ifdef CONFIG_PAGE_BOOST_RECORDING
+	record_io_info(filp, index, last_index - index);
+#endif
 
 	for (;;) {
 		struct page *page;
@@ -2312,7 +2332,17 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 			goto out;
 	}
 
+#ifdef CONFIG_FSCRYPT_SDP
+	//Check after writeback is completed.
+	if (fscrypt_sdp_file_not_readable(iocb->ki_filp)) {
+		retval = -EIO;
+		goto out;
+	}
+#endif
 	retval = generic_file_buffered_read(iocb, iter, retval);
+#ifdef CONFIG_FSCRYPT_SDP
+	fscrypt_sdp_unset_file_io_ongoing(iocb->ki_filp);
+#endif
 out:
 	return retval;
 }
@@ -2748,6 +2778,11 @@ next:
 			break;
 	}
 	rcu_read_unlock();
+
+#ifdef CONFIG_PAGE_BOOST_RECORDING
+	/* end_pgoff is inclusive */
+	record_io_info(file, start_pgoff, last_pgoff - start_pgoff + 1);
+#endif
 }
 EXPORT_SYMBOL(filemap_map_pages);
 
