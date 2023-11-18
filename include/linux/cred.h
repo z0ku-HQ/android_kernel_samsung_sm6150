@@ -347,6 +347,7 @@ static inline void put_cred(const struct cred *_cred)
 			__put_cred(cred);
 	}
 }
+#endif
 
 /**
  * current_cred - Access the current task's subjective credentials
