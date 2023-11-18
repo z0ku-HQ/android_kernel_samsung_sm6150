@@ -608,6 +608,9 @@ struct wcd_mbhc {
 
 	unsigned long intr_status;
 	bool is_hph_ocp_pending;
+#if defined(CONFIG_SND_SOC_WCD_MBHC_SLOW_DET)
+	bool slow_insertion;
+#endif
 	bool usbc_force_pr_mode;
 
 	struct wcd_mbhc_fn *mbhc_fn;
@@ -615,6 +618,12 @@ struct wcd_mbhc {
 	int usbc_mode;
 	struct device_node *fsa_np;
 	struct notifier_block fsa_nb;
+
+	bool pullup_enable;
+#ifdef CONFIG_SND_SOC_IMPED_SENSING
+	int default_impedance_offset;
+	int impedance_offset;
+#endif
 	struct notifier_block psy_nb;
 	struct power_supply *usb_psy;
 	struct work_struct usbc_analog_work;
