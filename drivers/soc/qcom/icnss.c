@@ -43,6 +43,8 @@
 #include <linux/of_irq.h>
 #include <linux/soc/qcom/qmi.h>
 #include <linux/sysfs.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 #include <soc/qcom/memory_dump.h>
 #include <soc/qcom/icnss.h>
 #include <soc/qcom/secure_buffer.h>
@@ -156,6 +158,9 @@ static const char * const icnss_pdr_cause[] = {
 	[ICNSS_ROOT_PD_SHUTDOWN] = "Root PD shutdown",
 	[ICNSS_HOST_ERROR] = "Host error",
 };
+
+char ver_info[512] = {0,};
+char softap_info[512] = {0,};
 
 static ssize_t icnss_sysfs_store(struct kobject *kobj,
 				 struct kobj_attribute *attr,
